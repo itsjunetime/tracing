@@ -1011,7 +1011,9 @@ pub mod __macro_support {
     /// Breaking changes to this module may occur in small-numbered versions
     /// without warning.
     pub fn __is_enabled(meta: &Metadata<'static>, interest: Interest) -> bool {
-        interest.is_always() || crate::dispatcher::get_default(|default| default.enabled(meta))
+        !interest.is_never()
+            && (interest.is_always()
+                || crate::dispatcher::get_default(|default| default.enabled(meta)))
     }
 
     /// /!\ WARNING: This is *not* a stable API! /!\
@@ -1046,8 +1048,8 @@ pub mod __macro_support {
     /// without warning.
     #[cfg(feature = "log")]
     pub fn __tracing_log(
-        meta: &Metadata<'_>,
-        logger: &dyn log::Log,
+        meta: &Metadata<'static>,
+        logger: &'static dyn log::Log,
         log_meta: log::Metadata<'_>,
         values: &tracing_core::field::ValueSet<'_>,
     ) {
@@ -1069,16 +1071,14 @@ pub mod __macro_support {
     }
 
     #[cfg(feature = "log")]
-    #[inline]
     pub fn __tracing_log_macro_replacement(
         level: crate::Level,
-        callsite: &'static MacroCallsite,
-        value_set: &tracing_core::field::ValueSet<'_>
+        meta: &'static Metadata<'static>,
+        value_set: &tracing_core::field::ValueSet<'_>,
     ) {
         use crate::log;
         let level = level_to_log(level);
         if level <= log::max_level() {
-            let meta = callsite.metadata();
             let log_meta = log::Metadata::builder()
                 .level(level)
                 .target(meta.target())
@@ -1157,7 +1157,7 @@ pub mod __macro_support {
             crate::Level::WARN => crate::log::Level::Warn,
             crate::Level::INFO => crate::log::Level::Info,
             crate::Level::DEBUG => crate::log::Level::Debug,
-            _ => crate::log::Level::Trace
+            _ => crate::log::Level::Trace,
         }
     }
 
