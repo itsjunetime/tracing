@@ -1046,8 +1046,8 @@ pub mod __macro_support {
     /// without warning.
     #[cfg(feature = "log")]
     pub fn __tracing_log(
-        meta: &Metadata<'static>,
-        logger: &'static dyn log::Log,
+        meta: &Metadata<'_>,
+        logger: &dyn log::Log,
         log_meta: log::Metadata<'_>,
         values: &tracing_core::field::ValueSet<'_>,
     ) {
@@ -1066,6 +1066,28 @@ pub mod __macro_support {
                 ))
                 .build(),
         );
+    }
+
+    #[cfg(feature = "log")]
+    #[inline]
+    pub fn __tracing_log_macro_replacement(
+        level: crate::Level,
+        callsite: &'static MacroCallsite,
+        value_set: &tracing_core::field::ValueSet<'_>
+    ) {
+        use crate::log;
+        let level = level_to_log(level);
+        if level <= log::max_level() {
+            let meta = callsite.metadata();
+            let log_meta = log::Metadata::builder()
+                .level(level)
+                .target(meta.target())
+                .build();
+            let logger = log::logger();
+            if logger.enabled(&log_meta) {
+                __tracing_log(meta, logger, log_meta, value_set)
+            }
+        }
     }
 
     /// Implementation detail used for constructing FieldSet names from raw
