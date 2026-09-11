@@ -48,9 +48,11 @@ macro_rules! span {
                         )
                     } else {
                         let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
-                        if lt_max_level {
-                            span.record_all(&value_set);
-                        }
+                        $crate::if_log_cfg!({
+                            if lt_max_level {
+                                span.record_all(&value_set);
+                            }
+                        } else {});
                         span
                     }
                 }
@@ -83,9 +85,11 @@ macro_rules! span {
                         )
                     } else {
                         let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
-                        if lt_max_level {
-                            span.record_all(&value_set);
-                        }
+                        $crate::if_log_cfg!({
+                            if lt_max_level {
+                                span.record_all(&value_set);
+                            }
+                        } else {});
                         span
                     }
                 }
@@ -3281,6 +3285,37 @@ macro_rules! __tracing_log {
 #[cfg(not(feature = "log"))]
 #[doc(hidden)]
 #[macro_export]
+macro_rules! if_log_cfg {
+    ($if_log:block else $else_block:block) => {
+        $else_block
+    }
+}
+
+#[cfg(all(feature = "log", not(feature = "log-always")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! if_log_cfg {
+    ($if_log:block else $else_block:block) => {
+        if !$crate::dispatcher::has_been_set() {
+            $if_log
+        } else {
+            $else_block
+        }
+    }
+}
+
+#[cfg(all(feature = "log", feature = "log-always"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! if_log_cfg {
+    ($if_log:block else $else_block:block) => {
+        $if_log
+    }
+}
+
+#[cfg(not(feature = "log"))]
+#[doc(hidden)]
+#[macro_export]
 macro_rules! if_log_enabled {
     ($lvl:expr, $e:expr;) => {
         $crate::if_log_enabled! { $lvl, $e }
@@ -3293,7 +3328,7 @@ macro_rules! if_log_enabled {
     };
 }
 
-#[cfg(all(feature = "log", not(feature = "log-always")))]
+#[cfg(feature = "log")]
 #[doc(hidden)]
 #[macro_export]
 macro_rules! if_log_enabled {
@@ -3305,31 +3340,7 @@ macro_rules! if_log_enabled {
     };
     ($lvl:expr, $if_log:block else $else_block:block) => {
         if $crate::__macro_support::level_to_log($lvl) <= $crate::log::STATIC_MAX_LEVEL {
-            if !$crate::dispatcher::has_been_set() {
-                $if_log
-            } else {
-                $else_block
-            }
-        } else {
-            $else_block
-        }
-    };
-}
-
-#[cfg(all(feature = "log", feature = "log-always"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! if_log_enabled {
-    ($lvl:expr, $e:expr;) => {
-        $crate::if_log_enabled! { $lvl, $e }
-    };
-    ($lvl:expr, $if_log:block) => {
-        $crate::if_log_enabled! { $lvl, $if_log else {} }
-    };
-    ($lvl:expr, $if_log:block else $else_block:block) => {
-        if $crate::__macro_support::level_to_log($lvl) <= $crate::log::STATIC_MAX_LEVEL {
-            #[allow(unused_braces)]
-            $if_log
+            $crate::if_log_cfg!($if_log else $else_block)
         } else {
             $else_block
         }
