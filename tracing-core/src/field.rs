@@ -1367,6 +1367,6 @@ mod test {
             use core::fmt::Write;
             write!(&mut result, "{:?}", value).unwrap();
         });
-        assert_eq!(result, format!("{}", r#"[61 62 63]" "[c0 ff ee]"#));
+        assert_eq!(result, r#"[61 62 63]" "[c0 ff ee]"#);
     }
 }
