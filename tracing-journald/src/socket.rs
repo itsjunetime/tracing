@@ -51,7 +51,7 @@ pub(crate) fn send_one_fd_to<P: AsRef<Path>>(
     unsafe {
         std::ptr::copy_nonoverlapping(
             path_bytes.as_ptr(),
-            addr.sun_path.as_mut_ptr() as *mut u8,
+            addr.sun_path.as_mut_ptr(),
             path_bytes.len(),
         )
     };
