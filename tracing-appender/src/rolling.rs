@@ -562,12 +562,8 @@ impl Rotation {
         // but newer versions of `time` deprecate the `parse` fn
         #[allow(deprecated)]
         match *self {
-            Rotation::MINUTELY => {
-                format_description::parse("[year]-[month]-[day]-[hour]-[minute]")
-            }
-            Rotation::HOURLY => {
-                format_description::parse("[year]-[month]-[day]-[hour]")
-            }
+            Rotation::MINUTELY => format_description::parse("[year]-[month]-[day]-[hour]-[minute]"),
+            Rotation::HOURLY => format_description::parse("[year]-[month]-[day]-[hour]"),
             Rotation::DAILY => format_description::parse("[year]-[month]-[day]"),
             Rotation::WEEKLY => format_description::parse("[year]-[month]-[day]"),
             Rotation::NEVER => format_description::parse("[year]-[month]-[day]"),
