@@ -978,12 +978,13 @@ impl PartialOrd<LevelFilter> for Level {
 
 #[inline(always)]
 fn filter_as_usize_sort_key(x: Option<Level>) -> usize {
+    const USE_NATIVE_SORT: bool = LevelFilter::OFF_USIZE > LevelInner::Error as usize;
     match x {
         Some(Level(f)) => f as usize,
         // The niche optimization for LevelFilter::OFF isn't guaranteed
         // to be the last variant + 1, so we explicitly return that for sorting here.
         None => {
-            if const { LevelFilter::OFF_USIZE > LevelInner::Error as usize } {
+            if USE_NATIVE_SORT {
                 LevelFilter::OFF_USIZE
             } else {
                 LevelInner::Error as usize + 1
