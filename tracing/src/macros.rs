@@ -53,7 +53,9 @@ macro_rules! span {
                             if lt_max_level {
                                 span.record_all(&value_set);
                             }
-                        } else {});
+                        } else {
+                            ::core::mem::drop(value_set);
+                        });
                         span
                     }
                 }
@@ -91,7 +93,9 @@ macro_rules! span {
                             if lt_max_level {
                                 span.record_all(&value_set);
                             }
-                        } else {});
+                        } else {
+                            ::core::mem::drop(value_set);
+                        });
                         span
                     }
                 }
@@ -2982,10 +2986,7 @@ macro_rules! valueset_all {
             // This import statement CANNOT be removed as it will break existing use cases.
             // See #831, #2332, #3424 for the last times we tried.
             use $crate::field::{debug, display, Value};
-            $fields.value_set_all($crate::valueset_all!(
-                @ { },
-                $($kvs)+
-            ))
+            $fields.value_set_all($crate::valueset_all!(@ { }, $($kvs)+))
         }
     };
     ($fields:expr,) => {
@@ -3281,7 +3282,7 @@ macro_rules! __tracing_log {
 macro_rules! if_log_cfg {
     ($if_log:block else $else_block:block) => {
         $else_block
-    }
+    };
 }
 
 #[cfg(all(feature = "log", not(feature = "log-always")))]
@@ -3294,7 +3295,7 @@ macro_rules! if_log_cfg {
         } else {
             $else_block
         }
-    }
+    };
 }
 
 #[cfg(all(feature = "log", feature = "log-always"))]
@@ -3303,7 +3304,7 @@ macro_rules! if_log_cfg {
 macro_rules! if_log_cfg {
     ($if_log:block else $else_block:block) => {
         $if_log
-    }
+    };
 }
 
 #[cfg(not(feature = "log"))]
