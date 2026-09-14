@@ -31,33 +31,28 @@ macro_rules! span {
                 level: $lvl,
                 fields: $($fields)*
             };
-            match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
-                value_set => {
-                    let lt_max_level = $crate::lt_max_level!($lvl);
 
-                    if lt_max_level &&
-                        $crate::lt_current_filter!($lvl) &&
-                        $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest())
-                    {
-                        let meta = __CALLSITE.metadata();
-                        // span with explicit parent
-                        $crate::Span::child_of(
-                            $parent,
-                            meta,
-                            &value_set,
-                        )
-                    } else {
-                        let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
-                        $crate::if_log_cfg!({
-                            if lt_max_level {
-                                span.record_all(&value_set);
-                            }
-                        } else {
-                            ::core::mem::drop(value_set);
-                        });
-                        span
+            let lt_max_level = $crate::lt_max_level!($lvl);
+
+            if lt_max_level &&
+                $crate::lt_current_filter!($lvl) &&
+                $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest())
+            {
+                let meta = __CALLSITE.metadata();
+                // span with explicit parent
+                $crate::Span::child_of(
+                    $parent,
+                    meta,
+                    &$crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+                )
+            } else {
+                let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
+                $crate::if_log_cfg!({
+                    if lt_max_level {
+                        span.record_all(&$crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*));
                     }
-                }
+                } else {});
+                span
             }
         }
     };
@@ -71,32 +66,27 @@ macro_rules! span {
                 level: $lvl,
                 fields: $($fields)*
             };
-            match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
-                value_set => {
-                    let lt_max_level = $crate::lt_max_level!($lvl);
 
-                    if lt_max_level &&
-                        $crate::lt_current_filter!($lvl) &&
-                        $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest())
-                    {
-                        let meta = __CALLSITE.metadata();
-                        // span with contextual parent
-                        $crate::Span::new(
-                            meta,
-                            &value_set,
-                        )
-                    } else {
-                        let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
-                        $crate::if_log_cfg!({
-                            if lt_max_level {
-                                span.record_all(&value_set);
-                            }
-                        } else {
-                            ::core::mem::drop(value_set);
-                        });
-                        span
+            let lt_max_level = $crate::lt_max_level!($lvl);
+
+            if lt_max_level &&
+                $crate::lt_current_filter!($lvl) &&
+                $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest())
+            {
+                let meta = __CALLSITE.metadata();
+                // span with contextual parent
+                $crate::Span::new(
+                    meta,
+                    &$crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+                )
+            } else {
+                let span = $crate::__macro_support::__disabled_span(__CALLSITE.metadata());
+                $crate::if_log_cfg!({
+                    if lt_max_level {
+                        span.record_all(&$crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*));
                     }
-                }
+                } else {});
+                span
             }
         }
     };
