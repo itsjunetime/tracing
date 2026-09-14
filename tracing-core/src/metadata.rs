@@ -982,7 +982,13 @@ fn filter_as_usize_sort_key(x: Option<Level>) -> usize {
         Some(Level(f)) => f as usize,
         // The niche optimization for LevelFilter::OFF isn't guaranteed
         // to be the last variant + 1, so we explicitly return that for sorting here.
-        None => if const { LevelFilter::OFF_USIZE > LevelInner::Error as usize } { LevelFilter::OFF_USIZE } else { LevelInner::Error as usize + 1 },
+        None => {
+            if const { LevelFilter::OFF_USIZE > LevelInner::Error as usize } {
+                LevelFilter::OFF_USIZE
+            } else {
+                LevelInner::Error as usize + 1
+            }
+        }
     }
 }
 
