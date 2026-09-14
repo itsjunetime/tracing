@@ -1101,8 +1101,7 @@ mod tests {
     #[test]
     fn level_filter_reprs() {
         let mapping = [
-            // Used to be (LevelInner::Error as usize + 1) until https://github.com/rust-lang/rust/pull/155473
-            (LevelFilter::OFF, usize::MAX),
+            (LevelFilter::OFF, LevelInner::Error as usize + 1),
             (LevelFilter::ERROR, LevelInner::Error as usize),
             (LevelFilter::WARN, LevelInner::Warn as usize),
             (LevelFilter::INFO, LevelInner::Info as usize),
