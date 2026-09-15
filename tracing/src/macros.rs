@@ -3203,7 +3203,11 @@ macro_rules! __tracing_log {
 #[macro_export]
 macro_rules! __tracing_log {
     ($level:expr, $callsite:expr, $value_set:expr) => {
-        $crate::__macro_support::__tracing_log_macro_replacement($level, $callsite.metadata(), $value_set)
+        $crate::__macro_support::__tracing_log_macro_replacement(
+            $level,
+            $callsite.metadata(),
+            $value_set,
+        )
     };
 }
 
