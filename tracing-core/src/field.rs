@@ -164,11 +164,13 @@ pub struct FieldSet {
 }
 
 /// A set of fields and values for a span.
+#[derive(Copy, Clone)]
 pub struct ValueSet<'a> {
     values: Values<'a>,
     fields: &'a FieldSet,
 }
 
+#[derive(Copy, Clone)]
 enum Values<'a> {
     /// A set of field-value pairs. Fields may be for the wrong field set, some
     /// fields may be missing, and fields may be in any order.

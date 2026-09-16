@@ -269,7 +269,7 @@ pub(in crate::field) mod test_util {
                 ),
             ];
             let valueset = fieldset.value_set(values);
-            let attrs = tracing_core::span::Attributes::new(&TEST_META_1, &valueset);
+            let attrs = tracing_core::span::Attributes::new(&TEST_META_1, valueset);
             f(attrs)
         }
     }
@@ -297,7 +297,7 @@ pub(in crate::field) mod test_util {
                 ),
             ];
             let valueset = fieldset.value_set(values);
-            let attrs = tracing_core::span::Attributes::new(&TEST_META_1, &valueset);
+            let attrs = tracing_core::span::Attributes::new(&TEST_META_1, valueset);
             f(attrs)
         }
     }

@@ -93,7 +93,7 @@ fn subscriber_thread(idx: usize, register_sleep_micros: u64) -> JoinHandle<()> {
             let values = [(&field, Some(&message as &dyn Value))];
             let value_set = CALLSITE.metadata().fields().value_set(&values);
 
-            Event::dispatch(meta, &value_set);
+            Event::dispatch(meta, value_set);
 
             // Wait a bit for everything to end (we don't want to remove the subscriber
             // immediately because that will influence the test).

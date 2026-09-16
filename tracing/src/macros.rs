@@ -32,6 +32,7 @@ macro_rules! span {
                 fields: $($fields)*
             };
 
+            /*
             let meta = __CALLSITE.metadata();
             let lvl = $lvl;
             let lt_max_level = $crate::lt_max_level!(lvl);
@@ -41,18 +42,27 @@ macro_rules! span {
                 $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest())
             {
                 // span with explicit parent
-                $crate::Span::child_of($parent, meta, &$crate::valueset_all!(meta.fields(), $($fields)*))
+                $crate::Span::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*))
             } else {
                 $crate::if_log_cfg!({
                     let span = $crate::__macro_support::__disabled_span(meta);
                     if lt_max_level {
-                        span.record_all(&$crate::valueset_all!(meta.fields(), $($fields)*));
+                        span.record_all($crate::valueset_all!(meta.fields(), $($fields)*));
                     }
                     span
                 } else {
                     $crate::__macro_support::__disabled_span(meta)
                 })
             }
+            */
+
+            // span with explicit parent
+            $crate::__macro_support::macro_gen_span(
+                $lvl,
+                &__CALLSITE,
+                $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+                |meta, value_set| $crate::Span::child_of($parent, meta, value_set)
+            )
         }
     };
     (target: $target:expr, $lvl:expr, $name:expr, $($fields:tt)*) => {
@@ -66,27 +76,38 @@ macro_rules! span {
                 fields: $($fields)*
             };
 
+            /*
             let meta = __CALLSITE.metadata();
             let lvl = $lvl;
             let lt_max_level = $crate::lt_max_level!(lvl);
 
-            if lt_max_level &&
-                $crate::lt_current_filter!(lvl) &&
-                $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest())
-            {
-                // span with contextual parent
-                $crate::Span::new(meta, &$crate::valueset_all!(meta.fields(), $($fields)*))
-            } else {
-                $crate::if_log_cfg!({
-                    let span = $crate::__macro_support::__disabled_span(meta);
-                    if lt_max_level {
-                        span.record_all(&$crate::valueset_all!(meta.fields(), $($fields)*));
-                    }
-                    span
+            match $crate::valueset_all!(meta.fields(), $($fields)*) {
+                value_set => if lt_max_level &&
+                    $crate::lt_current_filter!(lvl) &&
+                    $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest())
+                {
+                    // span with contextual parent
+                    $crate::Span::new(meta, value_set)
                 } else {
-                    $crate::__macro_support::__disabled_span(meta)
-                })
+                    $crate::if_log_cfg!({
+                        let span = $crate::__macro_support::__disabled_span(meta);
+                        if lt_max_level {
+                            span.record_all(value_set);
+                        }
+                        span
+                    } else {
+                        $crate::__macro_support::__disabled_span(meta)
+                    })
+                }
             }
+            */
+
+            $crate::__macro_support::macro_gen_span(
+                $lvl,
+                &__CALLSITE,
+                $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+                |meta, value_set| $crate::Span::new(meta, value_set)
+            )
         }
     };
     (target: $target:expr, parent: $parent:expr, $lvl:expr, $name:expr) => {
@@ -159,7 +180,7 @@ macro_rules! span {
 macro_rules! record_all {
     ($span:expr, $($fields:tt)*) => {
         if let Some(meta) = $span.metadata() {
-            $span.record_all(&$crate::valueset!(
+            $span.record_all($crate::valueset!(
                 meta.fields(),
                 $($fields)*
             ));
@@ -631,7 +652,7 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        let meta = __CALLSITE.metadata();
+        /*let meta = __CALLSITE.metadata();
         match $crate::valueset_all!(meta.fields(), $($fields)*) {
             value_set => if $crate::lt_max_level!($lvl) {
                 $crate::__tracing_log!($lvl, __CALLSITE, &value_set);
@@ -643,7 +664,14 @@ macro_rules! event {
                     $crate::Event::child_of($parent, meta, &value_set);
                 }
             }
-        }
+        }*/
+        // event with explicit parent
+        $crate::__macro_support::macro_gen_event_tracing_log_first(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
+        );
     });
     (name: $name:expr, target: $target:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -672,7 +700,7 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        let meta = __CALLSITE.metadata();
+        /*let meta = __CALLSITE.metadata();
         if $crate::lt_max_level!($lvl) {
             match $crate::valueset_all!(meta.fields(), $($fields)*) {
                 value_set => {
@@ -686,7 +714,13 @@ macro_rules! event {
                     $crate::__tracing_log!($lvl, __CALLSITE, &value_set);
                 }
             }
-        }
+        }*/
+        $crate::__macro_support::macro_gen_event_tracing_log_second(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::dispatch(meta, value_set)
+        );
     });
     (name: $name:expr, target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -719,6 +753,7 @@ macro_rules! event {
             fields: $($fields)*
         };
 
+        /*
         let meta = __CALLSITE.metadata();
         if $crate::lt_max_level!($lvl) {
             match $crate::valueset_all!(meta.fields(), $($fields)*) {
@@ -733,7 +768,13 @@ macro_rules! event {
                     }
                 }
             }
-        }
+        }*/
+        $crate::__macro_support::macro_gen_event_tracing_log_first(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
+        );
     });
     (target: $target:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -761,21 +802,12 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        let meta = __CALLSITE.metadata();
-        if $crate::lt_max_level!($lvl) {
-            match $crate::valueset_all!(meta.fields(), $($fields)*) {
-                value_set => {
-                    $crate::__tracing_log!($lvl, __CALLSITE, &value_set);
-
-                    if $crate::lt_current_filter!($lvl) &&
-                        $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest())
-                    {
-                        // event with explicit parent
-                        $crate::Event::child_of($parent, meta, &value_set);
-                    }
-                }
-            }
-        }
+        $crate::__macro_support::macro_gen_event_tracing_log_first(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
+        );
     });
     (name: $name:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -803,7 +835,7 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        let meta = __CALLSITE.metadata();
+        /*let meta = __CALLSITE.metadata();
         if $crate::lt_max_level!($lvl) {
             match $crate::valueset_all!(meta.fields(), $($fields)*) {
                 value_set => {
@@ -817,7 +849,13 @@ macro_rules! event {
                     $crate::__tracing_log!($lvl, __CALLSITE, &value_set);
                 }
             }
-        }
+        }*/
+        $crate::__macro_support::macro_gen_event_tracing_log_second(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::dispatch(meta, value_set)
+        );
     });
     (name: $name:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -849,7 +887,7 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        let meta = __CALLSITE.metadata();
+        /*let meta = __CALLSITE.metadata();
         match $crate::valueset_all!(meta.fields(), $($fields)*) {
             value_set => if $crate::lt_max_level!($lvl) {
                 if $crate::lt_current_filter!($lvl) &&
@@ -861,7 +899,13 @@ macro_rules! event {
 
                 $crate::__tracing_log!($lvl, __CALLSITE, &value_set);
             }
-        }
+        }*/
+        $crate::__macro_support::macro_gen_event_tracing_log_second(
+            $lvl,
+            &__CALLSITE,
+            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
+            |meta, value_set| $crate::Event::dispatch(meta, value_set)
+        );
     });
     (target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(

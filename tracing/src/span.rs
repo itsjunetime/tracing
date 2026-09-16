@@ -434,15 +434,15 @@ impl Span {
     /// [`Subscriber`]: super::subscriber::Subscriber
     /// [field values]: super::field::ValueSet
     /// [`follows_from`]: super::Span::follows_from
-    pub fn new(meta: &'static Metadata<'static>, values: &field::ValueSet<'_>) -> Span {
-        dispatcher::get_default(|dispatch| Self::new_with(meta, values, dispatch))
+    pub fn new(meta: &'static Metadata<'static>, values: field::ValueSet<'_>) -> Span {
+        dispatcher::get_default(move |dispatch| Self::new_with(meta, values, dispatch))
     }
 
     #[inline]
     #[doc(hidden)]
     pub fn new_with(
         meta: &'static Metadata<'static>,
-        values: &field::ValueSet<'_>,
+        values: field::ValueSet<'_>,
         dispatch: &Dispatch,
     ) -> Span {
         let new_span = Attributes::new(meta, values);
@@ -458,15 +458,15 @@ impl Span {
     /// [metadata]: super::Metadata
     /// [field values]: super::field::ValueSet
     /// [`follows_from`]: super::Span::follows_from
-    pub fn new_root(meta: &'static Metadata<'static>, values: &field::ValueSet<'_>) -> Span {
-        dispatcher::get_default(|dispatch| Self::new_root_with(meta, values, dispatch))
+    pub fn new_root(meta: &'static Metadata<'static>, values: field::ValueSet<'_>) -> Span {
+        dispatcher::get_default(move |dispatch| Self::new_root_with(meta, values, dispatch))
     }
 
     #[inline]
     #[doc(hidden)]
     pub fn new_root_with(
         meta: &'static Metadata<'static>,
-        values: &field::ValueSet<'_>,
+        values: field::ValueSet<'_>,
         dispatch: &Dispatch,
     ) -> Span {
         let new_span = Attributes::new_root(meta, values);
@@ -485,7 +485,7 @@ impl Span {
     pub fn child_of(
         parent: impl Into<Option<Id>>,
         meta: &'static Metadata<'static>,
-        values: &field::ValueSet<'_>,
+        values: field::ValueSet<'_>,
     ) -> Span {
         let mut parent = parent.into();
         dispatcher::get_default(move |dispatch| {
@@ -498,7 +498,7 @@ impl Span {
     pub fn child_of_with(
         parent: impl Into<Option<Id>>,
         meta: &'static Metadata<'static>,
-        values: &field::ValueSet<'_>,
+        values: field::ValueSet<'_>,
         dispatch: &Dispatch,
     ) -> Span {
         let new_span = match parent.into() {
@@ -581,7 +581,7 @@ impl Span {
             } else {
                 meta.target()
             };
-            let values = attrs.values();
+            let values = *attrs.values();
             span.log(
                 target,
                 crate::__macro_support::level_to_log(*meta.level()),
@@ -1212,8 +1212,7 @@ impl Span {
         if let Some(meta) = self.meta {
             if let Some(field) = field.as_field(meta) {
                 self.record_all(
-                    &meta
-                        .fields()
+                    meta.fields()
                         .value_set(&[(&field, Some(&value as &dyn field::Value))]),
                 );
             }
@@ -1224,7 +1223,7 @@ impl Span {
 
     /// Records all the fields in the provided `ValueSet`.
     #[doc(hidden)]
-    pub fn record_all(&self, values: &field::ValueSet<'_>) -> &Self {
+    pub fn record_all(&self, values: field::ValueSet<'_>) -> &Self {
         let record = Record::new(values);
         if let Some(ref inner) = self.inner {
             inner.record(&record);

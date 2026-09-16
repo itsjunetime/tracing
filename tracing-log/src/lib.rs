@@ -184,7 +184,7 @@ pub(crate) fn dispatch_record(record: &log::Record<'_>) {
 
         dispatch.event(&Event::new(
             meta,
-            &meta.fields().value_set(&[
+            meta.fields().value_set(&[
                 (&keys.message, Some(record.args() as &dyn field::Value)),
                 (&keys.target, Some(&record.target())),
                 (&keys.module, module),
