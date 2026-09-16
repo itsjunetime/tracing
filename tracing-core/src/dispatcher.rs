@@ -968,7 +968,7 @@ mod test {
                     0,
                     "event method called twice!"
                 );
-                Event::dispatch(&TEST_META, &TEST_META.fields().value_set(&[]))
+                Event::dispatch(&TEST_META, TEST_META.fields().value_set(&[]))
             }
 
             fn enter(&self, _: &span::Id) {}
@@ -977,7 +977,7 @@ mod test {
         }
 
         with_default(&Dispatch::new(TestSubscriber), || {
-            Event::dispatch(&TEST_META, &TEST_META.fields().value_set(&[]))
+            Event::dispatch(&TEST_META, TEST_META.fields().value_set(&[]))
         })
     }
 
@@ -991,7 +991,7 @@ mod test {
             get_default(|current| {
                 current.new_span(&span::Attributes::new(
                     &TEST_META,
-                    &TEST_META.fields().value_set(&[]),
+                    TEST_META.fields().value_set(&[]),
                 ))
             });
         }

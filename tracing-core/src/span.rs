@@ -22,14 +22,14 @@ pub struct Id(NonZeroU64);
 #[derive(Debug)]
 pub struct Attributes<'a> {
     metadata: &'static Metadata<'static>,
-    values: &'a field::ValueSet<'a>,
+    values: field::ValueSet<'a>,
     parent: Parent,
 }
 
 /// A set of fields recorded by a span.
 #[derive(Debug)]
 pub struct Record<'a> {
-    values: &'a field::ValueSet<'a>,
+    values: field::ValueSet<'a>,
 }
 
 /// Indicates what [the `Subscriber` considers] the "current" span.
@@ -107,7 +107,7 @@ impl<'a> From<&'a Id> for Option<Id> {
 impl<'a> Attributes<'a> {
     /// Returns `Attributes` describing a new child span of the current span,
     /// with the provided metadata and values.
-    pub fn new(metadata: &'static Metadata<'static>, values: &'a field::ValueSet<'a>) -> Self {
+    pub fn new(metadata: &'static Metadata<'static>, values: field::ValueSet<'a>) -> Self {
         Attributes {
             metadata,
             values,
@@ -117,7 +117,7 @@ impl<'a> Attributes<'a> {
 
     /// Returns `Attributes` describing a new span at the root of its own trace
     /// tree, with the provided metadata and values.
-    pub fn new_root(metadata: &'static Metadata<'static>, values: &'a field::ValueSet<'a>) -> Self {
+    pub fn new_root(metadata: &'static Metadata<'static>, values: field::ValueSet<'a>) -> Self {
         Attributes {
             metadata,
             values,
@@ -130,7 +130,7 @@ impl<'a> Attributes<'a> {
     pub fn child_of(
         parent: Id,
         metadata: &'static Metadata<'static>,
-        values: &'a field::ValueSet<'a>,
+        values: field::ValueSet<'a>,
     ) -> Self {
         Attributes {
             metadata,
@@ -147,7 +147,7 @@ impl<'a> Attributes<'a> {
     /// Returns a reference to a `ValueSet` containing any values the new span
     /// was created with.
     pub fn values(&self) -> &field::ValueSet<'a> {
-        self.values
+        &self.values
     }
 
     /// Returns true if the new span should be a root.
@@ -216,7 +216,7 @@ impl<'a> Attributes<'a> {
 
 impl<'a> Record<'a> {
     /// Constructs a new `Record` from a `ValueSet`.
-    pub fn new(values: &'a field::ValueSet<'a>) -> Self {
+    pub fn new(values: field::ValueSet<'a>) -> Self {
         Self { values }
     }
 

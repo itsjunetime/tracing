@@ -859,7 +859,7 @@ macro_rules! with_event_from_span {
             (&iter.next().unwrap(), ::core::option::Option::Some(&$value as &dyn field::Value)),
         )*];
         let vs = fs.value_set(&v);
-        let $event = Event::new_child_of($id, meta, &vs);
+        let $event = Event::new_child_of($id, meta, vs);
         $code
     };
 }
