@@ -35,13 +35,33 @@ macro_rules! span {
             // this variable assignment is crucial. the `spans_are_send` test starts failing without
             // it.
             let span = {
-                // span with explicit parent.
-                $crate::__macro_support::macro_gen_span(
-                    $lvl,
-                    &__CALLSITE,
-                    $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-                    |meta, value_set| $crate::Span::child_of($parent, meta, value_set)
-                )
+                let meta = __CALLSITE.metadata();
+                let lt_max_level = $crate::lt_max_level!($lvl);
+                let full_span = lt_max_level
+                    && $crate::lt_current_filter!($lvl)
+                    && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
+
+                $crate::if_log_cfg!({
+                    if full_span || lt_max_level {
+                        match $crate::valueset_all!(meta.fields(), $($fields)*) {
+                            value_set => if full_span {
+                                $crate::Span::child_of($parent, meta, value_set)
+                            } else {
+                                let span = $crate::__macro_support::__disabled_span(meta);
+                                span.record_all(value_set);
+                                span
+                            }
+                        }
+                    } else {
+                        $crate::__macro_support::__disabled_span(meta)
+                    }
+                } else {
+                    if full_span {
+                        $crate::Span::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                    } else {
+                        $crate::__macro_support::__disabled_span(meta)
+                    }
+                })
             };
             span
         }
@@ -60,12 +80,33 @@ macro_rules! span {
             // this variable assignment is crucial. the `spans_are_send` test starts failing without
             // it.
             let span = {
-                $crate::__macro_support::macro_gen_span(
-                    $lvl,
-                    &__CALLSITE,
-                    $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-                    |meta, value_set| $crate::Span::new(meta, value_set)
-                )
+                let meta = __CALLSITE.metadata();
+                let lt_max_level = $crate::lt_max_level!($lvl);
+                let full_span = lt_max_level
+                    && $crate::lt_current_filter!($lvl)
+                    && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
+
+                $crate::if_log_cfg!({
+                    if full_span || lt_max_level {
+                        match $crate::valueset_all!(meta.fields(), $($fields)*) {
+                            value_set => if full_span {
+                                $crate::Span::new(meta, value_set)
+                            } else {
+                                let span = $crate::__macro_support::__disabled_span(meta);
+                                span.record_all(value_set);
+                                span
+                            }
+                        }
+                    } else {
+                        $crate::__macro_support::__disabled_span(meta)
+                    }
+                } else {
+                    if full_span {
+                        $crate::Span::new(meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                    } else {
+                        $crate::__macro_support::__disabled_span(meta)
+                    }
+                })
             };
             span
         }
@@ -613,12 +654,22 @@ macro_rules! event {
         };
 
         // event with explicit parent
-        $crate::__macro_support::macro_gen_event_tracing_log_first(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
-        )
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+
+                        if enabled {
+                            $crate::Event::child_of($parent, __CALLSITE.metadata(), value_set);
+                        }
+                    }
+                }
+            }
+        }
     });
     (name: $name:expr, target: $target:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -647,12 +698,22 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        $crate::__macro_support::macro_gen_event_tracing_log_second(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::dispatch(meta, value_set)
-        );
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        if enabled {
+                            $crate::Event::dispatch(__CALLSITE.metadata(), value_set);
+                        }
+
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+                    }
+                }
+            }
+        }
     });
     (name: $name:expr, target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -685,12 +746,22 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        $crate::__macro_support::macro_gen_event_tracing_log_first(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
-        );
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+
+                        if enabled {
+                            $crate::Event::child_of($parent, __CALLSITE.metadata(), value_set);
+                        }
+                    }
+                }
+            }
+        }
     });
     (target: $target:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -718,12 +789,22 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        $crate::__macro_support::macro_gen_event_tracing_log_first(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::child_of($parent, meta, value_set)
-        );
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+
+                        if enabled {
+                            $crate::Event::child_of($parent, __CALLSITE.metadata(), value_set);
+                        }
+                    }
+                }
+            }
+        }
     });
     (name: $name:expr, parent: $parent:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -751,12 +832,22 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        $crate::__macro_support::macro_gen_event_tracing_log_second(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::dispatch(meta, value_set)
-        );
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        if enabled {
+                            $crate::Event::dispatch(__CALLSITE.metadata(), value_set);
+                        }
+
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+                    }
+                }
+            }
+        }
     });
     (name: $name:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -788,12 +879,22 @@ macro_rules! event {
             fields: $($fields)*
         };
 
-        $crate::__macro_support::macro_gen_event_tracing_log_second(
-            $lvl,
-            &__CALLSITE,
-            $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*),
-            |meta, value_set| $crate::Event::dispatch(meta, value_set)
-        );
+        if $crate::lt_max_level!($lvl) {
+            let enabled = $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest());
+
+            if enabled || ($crate::if_log_cfg! {{ true } else { false }}) {
+                match $crate::valueset_all!(__CALLSITE.metadata().fields(), $($fields)*) {
+                    value_set => {
+                        if enabled {
+                            $crate::Event::dispatch(__CALLSITE.metadata(), value_set);
+                        }
+
+                        $crate::__tracing_log!($lvl, __CALLSITE, value_set);
+                    }
+                }
+            }
+        }
     });
     (target: $target:expr, $lvl:expr, { $($fields:tt)* }, $($arg:tt)+ ) => (
         $crate::event!(
@@ -3123,23 +3224,17 @@ macro_rules! __tracing_stringify {
     }};
 }
 
-#[cfg(not(feature = "log"))]
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __tracing_log {
-    ($level:expr, $callsite:expr, $value_set:expr) => {};
-}
-
-#[cfg(feature = "log")]
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __tracing_log {
     ($level:expr, $callsite:expr, $value_set:expr) => {
-        $crate::__macro_support::__tracing_log_macro_replacement(
-            $level,
-            $callsite.metadata(),
-            $value_set,
-        )
+        $crate::if_log_cfg! {{
+            $crate::__macro_support::__tracing_log_macro_replacement(
+                $level,
+                $callsite.metadata(),
+                $value_set,
+            )
+        } else {}}
     };
 }
 

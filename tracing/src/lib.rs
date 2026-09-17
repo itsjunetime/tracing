@@ -987,7 +987,7 @@ pub mod subscriber;
 #[doc(hidden)]
 pub mod __macro_support {
     pub use crate::callsite::Callsite;
-    use crate::{subscriber::Interest, Metadata, Span};
+    use crate::{subscriber::Interest, Metadata};
     use core::{fmt, str};
     // Re-export the `core` functions that are used in macros. This allows
     // a crate to be named `core` and avoid name clashes.
@@ -1003,7 +1003,6 @@ pub mod __macro_support {
     /// Breaking changes to this module may occur in small-numbered versions
     /// without warning.
     pub use tracing_core::callsite::DefaultCallsite as MacroCallsite;
-    use tracing_core::field::ValueSet;
 
     /// /!\ WARNING: This is *not* a stable API! /!\
     /// This function, and all code contained in the `__macro_support` module, is
@@ -1051,7 +1050,7 @@ pub mod __macro_support {
     pub fn __tracing_log_macro_replacement(
         level: crate::Level,
         meta: &'static Metadata<'static>,
-        values: ValueSet<'_>,
+        values: tracing_core::field::ValueSet<'_>,
     ) {
         if crate::dispatcher::has_been_set() {
             return;
@@ -1155,67 +1154,6 @@ pub mod __macro_support {
             crate::Level::INFO => crate::log::Level::Info,
             crate::Level::DEBUG => crate::log::Level::Debug,
             _ => crate::log::Level::Trace,
-        }
-    }
-
-    pub fn macro_gen_span<'a>(
-        level: crate::Level,
-        callsite: &'static MacroCallsite,
-        value_set: ValueSet<'a>,
-        make_span: impl FnOnce(&'static Metadata<'static>, ValueSet<'a>) -> Span,
-    ) -> Span {
-        let meta = callsite.metadata();
-        let lt_max_level = crate::lt_max_level!(level);
-
-        if lt_max_level
-            && crate::lt_current_filter!(level)
-            && __is_enabled(meta, callsite.interest())
-        {
-            make_span(meta, value_set)
-        } else {
-            crate::if_log_cfg!({
-                let span = crate::__macro_support::__disabled_span(meta);
-                if lt_max_level {
-                    span.record_all(value_set);
-                }
-                span
-            } else {
-                __disabled_span(meta)
-            })
-        }
-    }
-
-    pub fn macro_gen_event_tracing_log_first<'a>(
-        level: crate::Level,
-        callsite: &'static MacroCallsite,
-        value_set: ValueSet<'a>,
-        make_event: impl FnOnce(&'static Metadata<'static>, ValueSet<'a>),
-    ) {
-        if crate::lt_max_level!(level) {
-            crate::__tracing_log!(level, callsite, value_set);
-
-            if crate::lt_current_filter!(level)
-                && __is_enabled(callsite.metadata(), callsite.interest())
-            {
-                make_event(callsite.metadata(), value_set);
-            }
-        }
-    }
-
-    pub fn macro_gen_event_tracing_log_second<'a>(
-        level: crate::Level,
-        callsite: &'static MacroCallsite,
-        value_set: ValueSet<'a>,
-        make_event: impl FnOnce(&'static Metadata<'static>, ValueSet<'a>),
-    ) {
-        if crate::lt_max_level!(level) {
-            if crate::lt_current_filter!(level)
-                && __is_enabled(callsite.metadata(), callsite.interest())
-            {
-                make_event(callsite.metadata(), value_set);
-            }
-
-            crate::__tracing_log!(level, callsite, value_set);
         }
     }
 
