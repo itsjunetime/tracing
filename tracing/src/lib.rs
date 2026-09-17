@@ -1048,12 +1048,28 @@ pub mod __macro_support {
     /// Breaking changes to this module may occur in small-numbered versions
     /// without warning.
     #[cfg(feature = "log")]
-    pub fn __tracing_log(
-        meta: &Metadata<'static>,
-        logger: &'static dyn log::Log,
-        log_meta: log::Metadata<'_>,
+    pub fn __tracing_log_macro_replacement(
+        level: crate::Level,
+        meta: &'static Metadata<'static>,
         values: ValueSet<'_>,
     ) {
+        if crate::dispatcher::has_been_set() {
+            return;
+        }
+        let level = level_to_log(level);
+        if level > crate::log::max_level() {
+            return;
+        }
+
+        let log_meta = crate::log::Metadata::builder()
+            .level(level)
+            .target(meta.target())
+            .build();
+        let logger = crate::log::logger();
+        if !logger.enabled(&log_meta) {
+            return;
+        }
+
         logger.log(
             &crate::log::Record::builder()
                 .file(meta.file())
@@ -1069,26 +1085,6 @@ pub mod __macro_support {
                 ))
                 .build(),
         );
-    }
-
-    #[cfg(feature = "log")]
-    pub fn __tracing_log_macro_replacement(
-        level: crate::Level,
-        meta: &'static Metadata<'static>,
-        value_set: ValueSet<'_>,
-    ) {
-        use crate::log;
-        let level = level_to_log(level);
-        if level <= log::max_level() {
-            let log_meta = log::Metadata::builder()
-                .level(level)
-                .target(meta.target())
-                .build();
-            let logger = log::logger();
-            if logger.enabled(&log_meta) {
-                __tracing_log(meta, logger, log_meta, value_set)
-            }
-        }
     }
 
     /// Implementation detail used for constructing FieldSet names from raw
@@ -1199,7 +1195,7 @@ pub mod __macro_support {
             crate::__tracing_log!(level, callsite, value_set);
 
             if crate::lt_current_filter!(level)
-                && crate::__macro_support::__is_enabled(callsite.metadata(), callsite.interest())
+                && __is_enabled(callsite.metadata(), callsite.interest())
             {
                 make_event(callsite.metadata(), value_set);
             }
@@ -1214,7 +1210,7 @@ pub mod __macro_support {
     ) {
         if crate::lt_max_level!(level) {
             if crate::lt_current_filter!(level)
-                && crate::__macro_support::__is_enabled(callsite.metadata(), callsite.interest())
+                && __is_enabled(callsite.metadata(), callsite.interest())
             {
                 make_event(callsite.metadata(), value_set);
             }

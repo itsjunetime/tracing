@@ -24,9 +24,6 @@ fn assert_send(_: impl Send + Sync) {}
 async fn send_fn() {
     // todo: expand this to more than `debug_span!`
     async move {}
-        .instrument(tracing::debug_span!(
-            "Value",
-            "value" = get_variable()
-        ))
+        .instrument(tracing::debug_span!("Value", "value" = get_variable()))
         .await;
 }
