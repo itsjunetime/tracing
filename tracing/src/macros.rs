@@ -1166,29 +1166,24 @@ macro_rules! span_enabled {
 #[macro_export]
 macro_rules! enabled {
     (kind: $kind:expr, target: $target:expr, $lvl:expr, { $($fields:tt)* } )=> ({
-        if $crate::lt_max_level!($lvl) && $crate::lt_current_filter!($lvl) {
-            use $crate::__macro_support::Callsite as _;
-            static __CALLSITE: $crate::callsite::DefaultCallsite = $crate::callsite2! {
-                name: $crate::__macro_support::concat!(
-                    "enabled ",
-                    $crate::__macro_support::file!(),
-                    ":",
-                    $crate::__macro_support::line!()
-                ),
-                kind: $kind.hint(),
-                target: $target,
-                level: $lvl,
-                fields: $($fields)*
-            };
-            if $crate::__macro_support::__is_enabled(__CALLSITE.metadata(), __CALLSITE.interest()) {
-                let meta = __CALLSITE.metadata();
-                $crate::dispatcher::get_default(|current| current.enabled(meta))
-            } else {
-                false
-            }
-        } else {
-            false
-        }
+        use $crate::__macro_support::Callsite as _;
+        static __CALLSITE: $crate::callsite::DefaultCallsite = $crate::callsite2! {
+            name: $crate::__macro_support::concat!(
+                "enabled ",
+                $crate::__macro_support::file!(),
+                ":",
+                $crate::__macro_support::line!()
+            ),
+            kind: $kind.hint(),
+            target: $target,
+            level: $lvl,
+            fields: $($fields)*
+        };
+        let meta = __CALLSITE.metadata();
+        $crate::lt_max_level!($lvl) &&
+            $crate::lt_current_filter!($lvl) &&
+            $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest()) &&
+            $crate::dispatcher::get_default(|current| current.enabled(meta))
     });
     // Just target and level
     (kind: $kind:expr, target: $target:expr, $lvl:expr ) => (
