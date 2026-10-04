@@ -593,6 +593,8 @@ macro_rules! event_log_first_with_event_parent {
                 && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
 
             $crate::if_log_cfg! {{
+                // TODO: has_been_set was previously checked AFTER the value set was definitely
+                // constructed. I think. Maybe we can use that knowledge to optimize more.
                 let do_tracing_log = !$crate::dispatcher::has_been_set();
                 if enabled || do_tracing_log {
                     match $crate::valueset_all!(meta.fields(), $($fields)*) {
