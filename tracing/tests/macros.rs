@@ -490,6 +490,7 @@ fn event() {
     );
 }
 
+#[expect(unused_must_use)]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn enabled() {
@@ -504,6 +505,7 @@ fn enabled() {
     enabled!(target: "rando", Level::DEBUG, field);
 }
 
+#[expect(unused_must_use)]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn span_enabled() {
@@ -518,6 +520,7 @@ fn span_enabled() {
     span_enabled!(target: "rando", Level::DEBUG, field);
 }
 
+#[expect(unused_must_use)]
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
 #[test]
 fn event_enabled() {
