@@ -32,38 +32,33 @@ macro_rules! span {
                 fields: $($fields)*
             };
 
-            // this variable assignment is crucial. the `spans_are_send` test starts failing without
-            // it.
-            let span = {
-                let meta = __CALLSITE.metadata();
-                let lt_max_level = $crate::lt_max_level!($lvl);
-                let full_span = lt_max_level
-                    && $crate::lt_current_filter!($lvl)
-                    && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
+            let meta = __CALLSITE.metadata();
+            let lt_max_level = $crate::lt_max_level!($lvl);
+            let full_span = lt_max_level
+                && $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
 
-                $crate::if_log_cfg!({
-                    if full_span || lt_max_level {
-                        match $crate::valueset_all!(meta.fields(), $($fields)*) {
-                            value_set => if full_span {
-                                $crate::Span::child_of($parent, meta, value_set)
-                            } else {
-                                let span = $crate::__macro_support::__disabled_span(meta);
-                                span.record_all(value_set);
-                                span
-                            }
+            $crate::if_log_cfg!({
+                if full_span || lt_max_level {
+                    match $crate::valueset_all!(meta.fields(), $($fields)*) {
+                        value_set => if full_span {
+                            $crate::Span::child_of($parent, meta, value_set)
+                        } else {
+                            let span = $crate::__macro_support::__disabled_span(meta);
+                            span.record_all(value_set);
+                            span
                         }
-                    } else {
-                        $crate::__macro_support::__disabled_span(meta)
                     }
                 } else {
-                    if full_span {
-                        $crate::Span::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*))
-                    } else {
-                        $crate::__macro_support::__disabled_span(meta)
-                    }
-                })
-            };
-            span
+                    $crate::__macro_support::__disabled_span(meta)
+                }
+            } else {
+                if full_span {
+                    $crate::Span::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                } else {
+                    $crate::__macro_support::__disabled_span(meta)
+                }
+            })
         }
     };
     (target: $target:expr, $lvl:expr, $name:expr, $($fields:tt)*) => {
@@ -77,38 +72,33 @@ macro_rules! span {
                 fields: $($fields)*
             };
 
-            // this variable assignment is crucial. the `spans_are_send` test starts failing without
-            // it.
-            let span = {
-                let meta = __CALLSITE.metadata();
-                let lt_max_level = $crate::lt_max_level!($lvl);
-                let full_span = lt_max_level
-                    && $crate::lt_current_filter!($lvl)
-                    && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
+            let meta = __CALLSITE.metadata();
+            let lt_max_level = $crate::lt_max_level!($lvl);
+            let full_span = lt_max_level
+                && $crate::lt_current_filter!($lvl)
+                && $crate::__macro_support::__is_enabled(meta, __CALLSITE.interest());
 
-                $crate::if_log_cfg!({
-                    if full_span || lt_max_level {
-                        match $crate::valueset_all!(meta.fields(), $($fields)*) {
-                            value_set => if full_span {
-                                $crate::Span::new(meta, value_set)
-                            } else {
-                                let span = $crate::__macro_support::__disabled_span(meta);
-                                span.record_all(value_set);
-                                span
-                            }
+            $crate::if_log_cfg!({
+                if full_span || lt_max_level {
+                    match $crate::valueset_all!(meta.fields(), $($fields)*) {
+                        value_set => if full_span {
+                            $crate::Span::new(meta, value_set)
+                        } else {
+                            let span = $crate::__macro_support::__disabled_span(meta);
+                            span.record_all(value_set);
+                            span
                         }
-                    } else {
-                        $crate::__macro_support::__disabled_span(meta)
                     }
                 } else {
-                    if full_span {
-                        $crate::Span::new(meta, $crate::valueset_all!(meta.fields(), $($fields)*))
-                    } else {
-                        $crate::__macro_support::__disabled_span(meta)
-                    }
-                })
-            };
-            span
+                    $crate::__macro_support::__disabled_span(meta)
+                }
+            } else {
+                if full_span {
+                    $crate::Span::new(meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                } else {
+                    $crate::__macro_support::__disabled_span(meta)
+                }
+            })
         }
     };
     (target: $target:expr, parent: $parent:expr, $lvl:expr, $name:expr) => {
