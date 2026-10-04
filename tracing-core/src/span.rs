@@ -107,20 +107,20 @@ impl<'a> From<&'a Id> for Option<Id> {
 impl<'a> Attributes<'a> {
     /// Returns `Attributes` describing a new child span of the current span,
     /// with the provided metadata and values.
-    pub fn new(metadata: &'static Metadata<'static>, values: field::ValueSet<'a>) -> Self {
+    pub fn new(metadata: &'static Metadata<'static>, values: &'a field::ValueSet<'a>) -> Self {
         Attributes {
             metadata,
-            values,
+            values: *values,
             parent: Parent::Current,
         }
     }
 
     /// Returns `Attributes` describing a new span at the root of its own trace
     /// tree, with the provided metadata and values.
-    pub fn new_root(metadata: &'static Metadata<'static>, values: field::ValueSet<'a>) -> Self {
+    pub fn new_root(metadata: &'static Metadata<'static>, values: &'a field::ValueSet<'a>) -> Self {
         Attributes {
             metadata,
-            values,
+            values: *values,
             parent: Parent::Root,
         }
     }
@@ -130,11 +130,11 @@ impl<'a> Attributes<'a> {
     pub fn child_of(
         parent: Id,
         metadata: &'static Metadata<'static>,
-        values: field::ValueSet<'a>,
+        values: &'a field::ValueSet<'a>,
     ) -> Self {
         Attributes {
             metadata,
-            values,
+            values: *values,
             parent: Parent::Explicit(parent),
         }
     }
@@ -216,8 +216,8 @@ impl<'a> Attributes<'a> {
 
 impl<'a> Record<'a> {
     /// Constructs a new `Record` from a `ValueSet`.
-    pub fn new(values: field::ValueSet<'a>) -> Self {
-        Self { values }
+    pub fn new(values: &'a field::ValueSet<'a>) -> Self {
+        Self { values: *values }
     }
 
     /// Records all the fields in this `Record` with the provided [Visitor].

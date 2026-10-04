@@ -42,10 +42,10 @@ macro_rules! span {
                 if full_span || lt_max_level {
                     match $crate::valueset_all!(meta.fields(), $($fields)*) {
                         value_set => if full_span {
-                            $crate::Span::child_of($parent, meta, value_set)
+                            $crate::Span::child_of($parent, meta, &value_set)
                         } else {
                             let span = $crate::__macro_support::__disabled_span(meta);
-                            span.record_all(value_set);
+                            span.record_all(&value_set);
                             span
                         }
                     }
@@ -54,7 +54,7 @@ macro_rules! span {
                 }
             } else {
                 if full_span {
-                    $crate::Span::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                    $crate::Span::child_of($parent, meta, &$crate::valueset_all!(meta.fields(), $($fields)*))
                 } else {
                     $crate::__macro_support::__disabled_span(meta)
                 }
@@ -82,10 +82,10 @@ macro_rules! span {
                 if full_span || lt_max_level {
                     match $crate::valueset_all!(meta.fields(), $($fields)*) {
                         value_set => if full_span {
-                            $crate::Span::new(meta, value_set)
+                            $crate::Span::new(meta, &value_set)
                         } else {
                             let span = $crate::__macro_support::__disabled_span(meta);
-                            span.record_all(value_set);
+                            span.record_all(&value_set);
                             span
                         }
                     }
@@ -94,7 +94,7 @@ macro_rules! span {
                 }
             } else {
                 if full_span {
-                    $crate::Span::new(meta, $crate::valueset_all!(meta.fields(), $($fields)*))
+                    $crate::Span::new(meta, &$crate::valueset_all!(meta.fields(), $($fields)*))
                 } else {
                     $crate::__macro_support::__disabled_span(meta)
                 }
@@ -171,7 +171,7 @@ macro_rules! span {
 macro_rules! record_all {
     ($span:expr, $($fields:tt)*) => {
         if let Some(meta) = $span.metadata() {
-            $span.record_all($crate::valueset!(
+            $span.record_all(&$crate::valueset!(
                 meta.fields(),
                 $($fields)*
             ));
@@ -603,14 +603,14 @@ macro_rules! event_log_first_with_event_parent {
 
                             if enabled {
                                 // event with explicit parent
-                                $crate::Event::child_of($parent, meta, value_set);
+                                $crate::Event::child_of($parent, meta, &value_set);
                             }
                         }
                     }
                 }
             } else {
                 if enabled {
-                    $crate::Event::child_of($parent, meta, $crate::valueset_all!(meta.fields(), $($fields)*));
+                    $crate::Event::child_of($parent, meta, &$crate::valueset_all!(meta.fields(), $($fields)*));
                 }
             }}
         }
@@ -632,19 +632,18 @@ macro_rules! event_dispatch_first_log_second {
                     match $crate::valueset_all!(meta.fields(), $($fields)*) {
                         value_set => {
                             if enabled {
-                                $crate::Event::dispatch(meta, value_set);
+                                $crate::Event::dispatch(meta, &value_set);
                             }
 
                             if do_tracing_log {
                                 $crate::__macro_support::__tracing_log_macro_replacement($lvl, meta, value_set)
                             }
-
                         }
                     }
                 }
             } else {
                 if enabled {
-                    $crate::Event::dispatch(meta, $crate::valueset_all!(meta.fields(), $($fields)*));
+                    $crate::Event::dispatch(meta, &$crate::valueset_all!(meta.fields(), $($fields)*));
                 }
             }}
         }
