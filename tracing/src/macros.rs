@@ -3244,13 +3244,10 @@ macro_rules! __tracing_stringify {
     (r#unsized) => { "unsized" };
     (r#virtual) => { "virtual" };
     (r#yield) => { "yield" };
-    ($k:ident) => { ::core::stringify!($k) };
-    ($($k:ident).+) => {{
-        const NAME: $crate::__macro_support::FieldName<{
-            $crate::__macro_support::FieldName::len(::core::stringify!($($k).+))
-        }> = $crate::__macro_support::FieldName::new(::core::stringify!($($k).+));
-        NAME.as_str()
-    }};
+    ($k:ident) => { $crate::__macro_support::stringify!($k) };
+    ($k:ident$(.$ks:ident)+) => {
+        $crate::__macro_support::concat!($crate::__tracing_stringify!($k), $(".", $crate::__tracing_stringify!($ks),)+)
+    }
 }
 
 #[cfg(not(feature = "log"))]
